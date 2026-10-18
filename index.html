@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Course Equivalencies | HCT CIS Abu Dhabi</title>
+  
+  <!-- ExcelJS Library for rich styled .xlsx generation -->
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
@@ -197,18 +201,27 @@
     }
     .table-title { font-size: 20px; font-weight: 800; color: #0f172a; }
 
-    .btn-hct {
+    /* Modern Styled Excel Export Button */
+    .btn-excel {
       background-color: #002D72;
       color: #ffffff;
       font-size: 13px;
       font-weight: 800;
-      padding: 9px 18px;
+      padding: 10px 20px;
       border-radius: 8px;
       border: none;
       cursor: pointer;
-      transition: background 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      box-shadow: 0 2px 4px rgba(0,45,114,0.25);
     }
-    .btn-hct:hover { background-color: #001D4A; }
+    .btn-excel:hover {
+      background-color: #001D4A;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 8px rgba(0,45,114,0.35);
+    }
 
     .table-wrap {
       border: 2px solid #cbd5e1;
@@ -262,18 +275,16 @@
 </head>
 <body>
 
-  <!-- Top Navigation Header with Native Inline HCT Logo -->
+  <!-- Top Navigation Header -->
   <header class="top-bar">
     <div class="nav-content">
       
-      <!-- Built-in Vector HCT Logo (Zero External Calls) -->
       <div class="brand-group">
         <div style="display: flex; align-items: center; gap: 12px;">
           <div style="text-align: right; line-height: 1.1;">
             <div style="font-weight: 900; font-size: 16px; color: #002D72;">كليات التقنية العليا</div>
             <div style="font-weight: 700; font-size: 10px; color: #475569; margin-top: 2px;">Higher Colleges of Technology</div>
           </div>
-          <!-- Official Arch Emblem in Pure SVG -->
           <svg style="width: 40px; height: 40px; color: #002D72; flex-shrink: 0;" viewBox="0 0 100 100" fill="currentColor">
             <path d="M50 10 C30 10 15 35 15 70 L85 70 C85 35 70 10 50 10 Z M50 25 C62 25 72 45 74 65 L26 65 C28 45 38 25 50 25 Z"/>
             <rect x="15" y="75" width="70" height="15" rx="3"/>
@@ -286,7 +297,6 @@
         </div>
       </div>
 
-      <!-- Prepared By Credentials -->
       <div class="author-badge">
         <span class="author-label">Curated Academic Reference</span>
         <div class="author-name">Prepared by: <span>Dr. Nafeth Al Hashlamoun (ADB)</span> · CIS Dept</div>
@@ -297,11 +307,10 @@
 
   <main class="main-wrap">
 
-    <!-- Search & Conversion Hero Card -->
+    <!-- Search & Conversion Card -->
     <div class="card">
       <div class="inputs-grid">
         
-        <!-- Live Instant Search -->
         <div style="position: relative;">
           <label class="field-label">
             <span>Search by Code or Title</span>
@@ -316,7 +325,6 @@
           <div id="autoList" class="auto-list"></div>
         </div>
 
-        <!-- Dropdown Selector -->
         <div>
           <label class="field-label">Or Select from Phased-Out Catalog</label>
           <select id="courseDropdown" class="field-input" style="cursor: pointer;">
@@ -339,17 +347,14 @@
           </div>
 
           <div class="conversion-grid">
-            <!-- Left: Phased-Out -->
             <div class="course-box box-old">
               <span class="box-tag tag-old">Phased-Out Course</span>
               <div id="resOldCode" class="code-lg code-old mono"></div>
               <div id="resOldName" class="title-lg"></div>
             </div>
 
-            <!-- Arrow -->
             <div class="arrow-icon">➔</div>
 
-            <!-- Right: Active Replacement -->
             <div class="course-box box-new">
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span class="box-tag tag-new">Active Replacement</span>
@@ -362,7 +367,6 @@
             </div>
           </div>
 
-          <!-- Bottom: Pre-reqs and Notes -->
           <div class="details-row">
             <div class="info-pane">
               <span class="info-lbl">Pre-requisites:</span>
@@ -396,7 +400,17 @@
             <option value="Extended Listing">Sheet Additions (Highlighted)</option>
           </select>
 
-          <button onclick="exportCSV()" class="btn-hct">📥 Export CSV</button>
+          <!-- Beautiful Excel Export Button -->
+          <button onclick="exportStyledExcel()" class="btn-excel" title="Download Formatted Excel Spreadsheet">
+            <svg style="width: 18px; height: 18px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="8" y1="13" x2="16" y2="13"></line>
+              <line x1="8" y1="17" x2="16" y2="17"></line>
+              <polyline points="10 9 9 9 8 9"></polyline>
+            </svg>
+            <span id="btnExcelText">Export Excel (.xlsx)</span>
+          </button>
         </div>
       </div>
 
@@ -623,22 +637,170 @@
       });
     }
 
-    // Export CSV
-    function exportCSV() {
-      const headers = ["Category", "Phased-Out Code", "Phased-Out Name", "Replacement Code", "Replacement Name", "Pre-requisites", "Comments", "Status"];
-      const rows = courses.map(c => [
-        `"${c.cat}"`, `"${c.oldCode}"`, `"${c.oldName}"`, `"${c.newCode}"`, `"${c.newName}"`,
-        `"${c.prereq.replace(/"/g, '""')}"`, `"${(c.comment || '').replace(/"/g, '""')}"`,
-        `"${c.isExtended ? 'Sheet Addition' : 'Official Catalog'}"`
-      ]);
+    // Rich Styled Excel (.xlsx) Export
+    async function exportStyledExcel() {
+      const btnText = document.getElementById("btnExcelText");
+      btnText.textContent = "Generating...";
 
-      const csv = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
-      const link = document.createElement("a");
-      link.setAttribute("href", encodeURI(csv));
-      link.setAttribute("download", "HCT_Course_Equivalencies_ADB.csv");
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      try {
+        if (!window.ExcelJS) {
+          alert("ExcelJS library is loading. Please try again in a second.");
+          btnText.textContent = "Export Excel (.xlsx)";
+          return;
+        }
+
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = "Dr. Nafeth Al Hashlamoun";
+        workbook.created = new Date();
+
+        const sheet = workbook.addWorksheet("Course Equivalencies", {
+          views: [{ showGridLines: true }]
+        });
+
+        // Set column widths
+        sheet.columns = [
+          { key: "cat", width: 22 },
+          { key: "oldCode", width: 18 },
+          { key: "oldName", width: 36 },
+          { key: "newCode", width: 18 },
+          { key: "newName", width: 36 },
+          { key: "prereq", width: 32 },
+          { key: "comment", width: 32 },
+          { key: "status", width: 26 }
+        ];
+
+        // 1. Title Banner
+        sheet.mergeCells("A1:H1");
+        const titleCell = sheet.getCell("A1");
+        titleCell.value = "HIGHER COLLEGES OF TECHNOLOGY (HCT) — CIS ABU DHABI CAMPUS";
+        titleCell.font = { name: "Calibri", size: 14, bold: true, color: { argb: "FFFFFFFF" } };
+        titleCell.alignment = { horizontal: "center", vertical: "middle" };
+        titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF002D72" } }; // HCT Navy
+        sheet.getRow(1).height = 32;
+
+        // 2. Sub-Banner
+        sheet.mergeCells("A2:H2");
+        const subCell = sheet.getCell("A2");
+        subCell.value = "Curriculum Migration & Course Equivalency Master Directory";
+        subCell.font = { name: "Calibri", size: 11, bold: true, color: { argb: "FF1E293B" } };
+        subCell.alignment = { horizontal: "center", vertical: "middle" };
+        subCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF1F5F9" } };
+        sheet.getRow(2).height = 22;
+
+        // 3. Author Info Row
+        sheet.mergeCells("A3:H3");
+        const authorCell = sheet.getCell("A3");
+        authorCell.value = "Prepared by: Dr. Nafeth Al Hashlamoun (ADB) · CIS Department";
+        authorCell.font = { name: "Calibri", size: 10, italic: true, bold: true, color: { argb: "FF002D72" } };
+        authorCell.alignment = { horizontal: "center", vertical: "middle" };
+        authorCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
+        sheet.getRow(3).height = 20;
+
+        // Row 4: Blank spacing
+        sheet.getRow(4).height = 8;
+
+        // 4. Table Header Row (Row 5)
+        const headers = [
+          "Category / Discipline",
+          "Phased-Out Code",
+          "Phased-Out Course Name",
+          "Active Replacement Code",
+          "Active Replacement Name",
+          "Pre-requisites",
+          "Advisory Notes / Workflow",
+          "Catalog Status"
+        ];
+
+        const headerRow = sheet.getRow(5);
+        headerRow.values = headers;
+        headerRow.height = 28;
+
+        headerRow.eachCell((cell) => {
+          cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: "FFFFFFFF" } };
+          cell.alignment = { horizontal: "center", vertical: "middle", wrapText: true };
+          cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF002D72" } };
+          cell.border = {
+            top: { style: "thin", color: { argb: "FF94A3B8" } },
+            bottom: { style: "medium", color: { argb: "FF0F172A" } },
+            left: { style: "thin", color: { argb: "FF94A3B8" } },
+            right: { style: "thin", color: { argb: "FF94A3B8" } }
+          };
+        });
+
+        // 5. Populate Data Rows
+        const filter = document.getElementById("catFilter").value;
+        const filteredCourses = courses.filter(c => filter === "ALL" || c.cat === filter);
+
+        filteredCourses.forEach((c) => {
+          const row = sheet.addRow([
+            c.cat,
+            c.oldCode,
+            c.oldName,
+            c.newCode,
+            c.newName,
+            c.prereq,
+            c.comment || (c.isExtended ? "Department Addition" : "—"),
+            c.isExtended ? "Verified Sheet Addition" : "Official Catalog Reference"
+          ]);
+
+          row.height = 24;
+
+          // Row background color: Soft purple for sheet additions, clean white/subtle for standard
+          const rowBgColor = c.isExtended ? "FFF3E8FF" : "FFFFFFFF";
+
+          row.eachCell((cell, colNumber) => {
+            cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: rowBgColor } };
+            cell.alignment = { vertical: "middle", wrapText: true };
+            cell.border = {
+              top: { style: "thin", color: { argb: "FFE2E8F0" } },
+              bottom: { style: "thin", color: { argb: "FFE2E8F0" } },
+              left: { style: "thin", color: { argb: "FFE2E8F0" } },
+              right: { style: "thin", color: { argb: "FFE2E8F0" } }
+            };
+
+            // Column specific styles
+            if (colNumber === 1) { // Category
+              cell.font = { name: "Calibri", size: 10, bold: true, color: { argb: "FF334155" } };
+              cell.alignment = { horizontal: "center", vertical: "middle" };
+            } else if (colNumber === 2) { // Old Code
+              cell.font = { name: "Consolas", size: 11, bold: true, color: { argb: "FFBE123C" } }; // Bold Rose
+              cell.alignment = { horizontal: "center", vertical: "middle" };
+            } else if (colNumber === 3) { // Old Name
+              cell.font = { name: "Calibri", size: 10.5, bold: true, color: { argb: "FF1E293B" } };
+            } else if (colNumber === 4) { // New Code
+              cell.font = { name: "Consolas", size: 11, bold: true, color: { argb: "FF047857" } }; // Bold Emerald
+              cell.alignment = { horizontal: "center", vertical: "middle" };
+            } else if (colNumber === 5) { // New Name
+              cell.font = { name: "Calibri", size: 10.5, bold: true, color: { argb: "FF0F172A" } };
+            } else if (colNumber === 6) { // Prereqs
+              cell.font = { name: "Consolas", size: 10, bold: true, color: { argb: "FF1E293B" } };
+            } else if (colNumber === 7) { // Notes
+              cell.font = { name: "Calibri", size: 10, italic: true, color: { argb: c.isExtended ? "FF6B21A8" : "FF92400E" } };
+            } else if (colNumber === 8) { // Status
+              cell.font = { name: "Calibri", size: 10, bold: true, color: { argb: c.isExtended ? "FF6B21A8" : "FF002D72" } };
+              cell.alignment = { horizontal: "center", vertical: "middle" };
+            }
+          });
+        });
+
+        // Generate buffer and trigger browser download
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+        const url = window.URL.createObjectURL(blob);
+        const anchor = document.createElement("a");
+        anchor.href = url;
+        anchor.download = "HCT_CIS_Course_Equivalencies_ADB.xlsx";
+        document.body.appendChild(anchor);
+        anchor.click();
+        document.body.removeChild(anchor);
+        window.URL.revokeObjectURL(url);
+
+      } catch (err) {
+        console.error("Export error:", err);
+        alert("An error occurred while generating the Excel sheet.");
+      } finally {
+        btnText.textContent = "Export Excel (.xlsx)";
+      }
     }
 
     renderTable();
