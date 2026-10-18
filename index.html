@@ -3,40 +3,645 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Course Equivalency Portal | HCT - CIS Abu Dhabi</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+  <title>Course Equivalencies | HCT CIS Abu Dhabi</title>
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .mono { font-family: 'JetBrains Mono', monospace; }
-    /* Ambient Mesh Gradient Animation */
-    .mesh-bg {
-      background: radial-gradient(circle at 15% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 45%),
-                  radial-gradient(circle at 85% 20%, rgba(16, 185, 129, 0.12) 0%, transparent 40%),
-                  radial-gradient(circle at 50% 80%, rgba(168, 85, 247, 0.14) 0%, transparent 50%),
-                  #0b0f19;
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: #f1f5f9;
+      color: #0f172a;
+      line-height: 1.5;
+      padding-bottom: 60px;
+    }
+    .mono { font-family: Consolas, "Liberation Mono", Menlo, Courier, monospace; }
+
+    /* Top Navigation Bar */
+    .top-bar {
+      background-color: #ffffff;
+      border-bottom: 2px solid #cbd5e1;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+    }
+    .nav-content {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 12px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+    .brand-group { display: flex; align-items: center; gap: 16px; }
+    .brand-text { border-left: 2px solid #cbd5e1; padding-left: 16px; }
+    .campus-title { font-size: 17px; font-weight: 800; color: #002D72; }
+    .portal-subtitle { font-size: 12px; color: #64748b; font-weight: 700; }
+    
+    .author-badge {
+      background-color: #f8fafc;
+      border: 1px solid #cbd5e1;
+      padding: 8px 16px;
+      border-radius: 10px;
+      text-align: right;
+    }
+    .author-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; display: block; }
+    .author-name { font-size: 14px; font-weight: 800; color: #0f172a; }
+    .author-name span { color: #002D72; }
+
+    .main-wrap { max-width: 1280px; margin: 0 auto; padding: 24px 20px; }
+
+    /* Search & Result Card */
+    .card {
+      background-color: #ffffff;
+      border: 1px solid #cbd5e1;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      margin-bottom: 24px;
+    }
+    .inputs-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+    .field-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 800;
+      color: #334155;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+    .field-input {
+      width: 100%;
+      background-color: #f8fafc;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 12px 16px;
+      font-size: 16px;
+      font-weight: 700;
+      color: #0f172a;
+      outline: none;
+      transition: all 0.15s;
+    }
+    .field-input:focus { border-color: #002D72; background-color: #ffffff; }
+
+    /* Autocomplete */
+    .auto-list {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      max-height: 260px;
+      overflow-y: auto;
+      z-index: 100;
+      box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+      margin-top: 6px;
+      display: none;
+    }
+    .auto-item {
+      padding: 12px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .auto-item:hover { background-color: #f8fafc; }
+
+    /* Conversion Showcase */
+    .showcase {
+      background-color: #f8fafc;
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 22px;
+    }
+    .empty-prompt { text-align: center; padding: 24px; font-weight: 700; color: #64748b; font-size: 16px; }
+
+    .conversion-grid {
+      display: grid;
+      grid-template-columns: 1fr 48px 1fr;
+      align-items: center;
+      gap: 16px;
+      margin-top: 14px;
+    }
+    @media (max-width: 768px) {
+      .conversion-grid { grid-template-columns: 1fr; }
+    }
+    .course-box {
+      border-radius: 12px;
+      padding: 20px;
+      border: 2px solid transparent;
+    }
+    .box-old { background-color: #fff1f2; border-color: #fecdd3; }
+    .box-new { background-color: #ecfdf5; border-color: #a7f3d0; }
+
+    .box-tag { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; display: block; }
+    .tag-old { color: #be123c; }
+    .tag-new { color: #047857; }
+
+    .code-lg { font-size: 34px; font-weight: 800; line-height: 1.1; margin-bottom: 6px; letter-spacing: -0.5px; }
+    .code-old { color: #be123c; }
+    .code-new { color: #047857; }
+    .title-lg { font-size: 17px; font-weight: 700; color: #1e293b; }
+
+    .arrow-icon {
+      width: 44px;
+      height: 44px;
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+      font-weight: 800;
+      color: #002D72;
+      margin: 0 auto;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .details-row {
+      margin-top: 18px;
+      padding-top: 16px;
+      border-top: 2px solid #e2e8f0;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 14px;
+    }
+    .info-pane {
+      background: #ffffff;
+      border: 2px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 14px;
+    }
+    .info-pane-note { background: #fffbeb; border-color: #fde68a; }
+    .info-lbl { font-size: 12px; font-weight: 800; text-transform: uppercase; color: #64748b; margin-bottom: 4px; display: block; }
+
+    /* Directory Table */
+    .table-controls {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .table-title { font-size: 20px; font-weight: 800; color: #0f172a; }
+
+    .btn-hct {
+      background-color: #002D72;
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 800;
+      padding: 9px 18px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .btn-hct:hover { background-color: #001D4A; }
+
+    .table-wrap {
+      border: 2px solid #cbd5e1;
+      border-radius: 12px;
+      overflow: hidden;
+      background-color: #ffffff;
+    }
+    table { width: 100%; table-layout: fixed; border-collapse: collapse; }
+    thead { background-color: #e2e8f0; }
+    th {
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      color: #334155;
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 2px solid #cbd5e1;
+    }
+    td {
+      padding: 14px 16px;
+      vertical-align: top;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 14px;
+    }
+    tr:hover { background-color: #f8fafc; }
+    .row-highlight { background-color: #faf5ff; border-left: 4px solid #9333ea; }
+    .row-highlight:hover { background-color: #f3e8ff; }
+
+    .pill {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+    .pill-std { background: #e2e8f0; color: #334155; }
+    .pill-ext { background: #f3e8ff; color: #6b21a8; border: 1px solid #d8b4fe; }
+
+    .legend-bar {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      font-weight: 700;
+      color: #475569;
+      margin-bottom: 14px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid #e2e8f0;
     }
   </style>
 </head>
-<body class="mesh-bg text-slate-100 min-h-screen selection:bg-indigo-500 selection:text-white pb-16">
+<body>
 
-  <!-- Top Sticky Navigation & Institutional Header -->
-  <header class="border-b border-slate-800/80 bg-slate-950/70 backdrop-blur-md sticky top-0 z-40">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+  <!-- Top Navigation Header with Native Inline HCT Logo -->
+  <header class="top-bar">
+    <div class="nav-content">
       
-      <!-- HCT Institutional Brand -->
-      <div class="flex items-center gap-3.5">
-        <!-- HCT Logo with fallback crest -->
-        <div class="h-12 w-auto bg-white/95 rounded-lg p-1.5 flex items-center justify-center shadow-md shadow-black/40 border border-slate-200/20">
-          <img 
-            src="https://upload.wikimedia.org/wikipedia/en/thumb/f/f9/Higher_Colleges_of_Technology_HCT_logo.png/300px-Higher_Colleges_of_Technology_HCT_logo.png" 
-            alt="Higher Colleges of Technology (HCT)" 
-            class="h-full w-auto object-contain"
-            onerror="this.onerror=null; this.src='https://images.seeklogo.com/logo-png/38/1/higher-colleges-of-technology-logo-png_seeklogo-389816.png';"
-          />
+      <!-- Built-in Vector HCT Logo (Zero External Calls) -->
+      <div class="brand-group">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="text-align: right; line-height: 1.1;">
+            <div style="font-weight: 900; font-size: 16px; color: #002D72;">كليات التقنية العليا</div>
+            <div style="font-weight: 700; font-size: 10px; color: #475569; margin-top: 2px;">Higher Colleges of Technology</div>
+          </div>
+          <!-- Official Arch Emblem in Pure SVG -->
+          <svg style="width: 40px; height: 40px; color: #002D72; flex-shrink: 0;" viewBox="0 0 100 100" fill="currentColor">
+            <path d="M50 10 C30 10 15 35 15 70 L85 70 C85 35 70 10 50 10 Z M50 25 C62 25 72 45 74 65 L26 65 C28 45 38 25 50 25 Z"/>
+            <rect x="15" y="75" width="70" height="15" rx="3"/>
+          </svg>
         </div>
+
+        <div class="brand-text">
+          <div class="campus-title">CIS — Abu Dhabi Campus</div>
+          <div class="portal-subtitle">Course Equivalency Portal</div>
+        </div>
+      </div>
+
+      <!-- Prepared By Credentials -->
+      <div class="author-badge">
+        <span class="author-label">Curated Academic Reference</span>
+        <div class="author-name">Prepared by: <span>Dr. Nafeth Al Hashlamoun (ADB)</span> · CIS Dept</div>
+      </div>
+
+    </div>
+  </header>
+
+  <main class="main-wrap">
+
+    <!-- Search & Conversion Hero Card -->
+    <div class="card">
+      <div class="inputs-grid">
+        
+        <!-- Live Instant Search -->
+        <div style="position: relative;">
+          <label class="field-label">
+            <span>Search by Code or Title</span>
+            <span style="color: #002D72; font-weight: 700;">Instant filter</span>
+          </label>
+          <input 
+            type="text" 
+            id="searchBox" 
+            placeholder="Type code or course name (e.g. CIS-2413, CIB-3103)..."
+            class="field-input"
+          />
+          <div id="autoList" class="auto-list"></div>
+        </div>
+
+        <!-- Dropdown Selector -->
         <div>
-          <div class="flex items-center gap-2">
-            <h2 class="text-xs font-bold uppercase tracking-wider text-slate-200">Higher Colleges of Technology</h2>
-            <
+          <label class="field-label">Or Select from Phased-Out Catalog</label>
+          <select id="courseDropdown" class="field-input" style="cursor: pointer;">
+            <option value="">-- Choose a phased-out course --</option>
+          </select>
+        </div>
+
+      </div>
+
+      <!-- Quick Conversion Showcase -->
+      <div class="showcase">
+        <div id="emptyPrompt" class="empty-prompt">
+          Type or select a phased-out course above to reveal the active replacement and pre-requisites.
+        </div>
+
+        <div id="activeData" style="display: none;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+            <span id="resBadge" class="pill pill-std">Official Catalog</span>
+            <span id="resCat" style="font-size: 14px; font-weight: 800; color: #475569;"></span>
+          </div>
+
+          <div class="conversion-grid">
+            <!-- Left: Phased-Out -->
+            <div class="course-box box-old">
+              <span class="box-tag tag-old">Phased-Out Course</span>
+              <div id="resOldCode" class="code-lg code-old mono"></div>
+              <div id="resOldName" class="title-lg"></div>
+            </div>
+
+            <!-- Arrow -->
+            <div class="arrow-icon">➔</div>
+
+            <!-- Right: Active Replacement -->
+            <div class="course-box box-new">
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span class="box-tag tag-new">Active Replacement</span>
+                <button onclick="copyCode()" style="font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 6px; border: 1px solid #cbd5e1; background: #ffffff; cursor: pointer;">
+                  <span id="copyTxt">Copy Code</span>
+                </button>
+              </div>
+              <div id="resNewCode" class="code-lg code-new mono"></div>
+              <div id="resNewName" class="title-lg"></div>
+            </div>
+          </div>
+
+          <!-- Bottom: Pre-reqs and Notes -->
+          <div class="details-row">
+            <div class="info-pane">
+              <span class="info-lbl">Pre-requisites:</span>
+              <div id="resPrereq" class="mono" style="font-size: 15px; font-weight: 800; color: #0f172a;"></div>
+            </div>
+            <div id="noteBox" class="info-pane info-pane-note">
+              <span class="info-lbl" style="color: #92400e;">Advisory Note / Workflow:</span>
+              <div id="resNote" style="font-size: 14px; font-weight: 800; color: #78350f;"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Complete Directory Table -->
+    <div class="card">
+      <div class="table-controls">
+        <div>
+          <div class="table-title">Full Equivalency Directory</div>
+          <div style="font-size: 13px; color: #64748b; font-weight: 600;">All 48 curriculum transitions displayed without horizontal scrolling</div>
+        </div>
+
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <select id="catFilter" onchange="renderTable()" class="field-input" style="padding: 8px 14px; font-size: 13px; width: auto;">
+            <option value="ALL">All Categories</option>
+            <option value="Common Courses">Common Courses</option>
+            <option value="Application Development">Application Development</option>
+            <option value="Cybersecurity">Cybersecurity</option>
+            <option value="Data Science">Data Science</option>
+            <option value="Extended Listing">Sheet Additions (Highlighted)</option>
+          </select>
+
+          <button onclick="exportCSV()" class="btn-hct">📥 Export CSV</button>
+        </div>
+      </div>
+
+      <div class="legend-bar">
+        <span>Legend:</span>
+        <span><span style="display: inline-block; width: 14px; height: 14px; background: #ffffff; border: 2px solid #cbd5e1; vertical-align: middle; border-radius: 3px;"></span> Official Approved Catalog</span>
+        <span><span style="display: inline-block; width: 14px; height: 14px; background: #f3e8ff; border: 2px solid #d8b4fe; vertical-align: middle; border-radius: 3px;"></span> Retained Sheet Addition (Highlighted)</span>
+      </div>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 15%;">Category</th>
+              <th style="width: 25%; color: #be123c;">Phased-Out Course</th>
+              <th style="width: 25%; color: #047857;">Replacement</th>
+              <th style="width: 21%;">Pre-requisites</th>
+              <th style="width: 14%; color: #92400e;">Notes</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div style="text-align: center; font-size: 12px; color: #94a3b8; font-weight: 700; margin-top: 18px;">
+        Higher Colleges of Technology · CIS Department (Abu Dhabi Campus) · Curated by Dr. Nafeth Al Hashlamoun
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    const courses = [
+      // Common Courses
+      { cat: "Common Courses", oldCode: "CIS-1103", oldName: "Hardware and Networking", newCode: "CIS-1313", newName: "Intro to Computer Systems & Networks", prereq: "N/A", comment: "", isExtended: false },
+      { cat: "Common Courses", oldCode: "CIS-1403", oldName: "Fundamentals of Programming", newCode: "CIS-1603", newName: "Programming I", prereq: "N/A", comment: "", isExtended: false },
+      { cat: "Common Courses", oldCode: "CIS-2403", oldName: "Object Oriented Programming", newCode: "CIS-1613", newName: "Programming II", prereq: "CIS 1603 or CIS 1403", comment: "", isExtended: false },
+      { cat: "Common Courses", oldCode: "CIS-2003", oldName: "Statistics and Probability", newCode: "CIS-1703", newName: "Introductory Statistics & Probability", prereq: "LSM1003 or LSM1013", comment: "", isExtended: false },
+      { cat: "Common Courses", oldCode: "CIS-2103", oldName: "Principles of Info Assurance, Security", newCode: "CIS-1213", newName: "Intro to Information Security", prereq: "CIS 1103 or CIS 1313", comment: "", isExtended: false },
+      { cat: "Common Courses", oldCode: "CIS-2203", oldName: "Applied Discrete Mathematics", newCode: "CIS-2023", newName: "Applied Discrete Mathematics", prereq: "LSM1003 or LSM1013", comment: "", isExtended: false },
+      { cat: "Common Courses", oldCode: "CIS-2303", oldName: "System Analysis and Design", newCode: "CIS-2113", newName: "Intro to Software Engineering", prereq: "CIS 1303 (PRE), CIS 1613 (CO)", comment: "Pre/Co-req relation", isExtended: false },
+      { cat: "Common Courses", oldCode: "CIS-2413", oldName: "Data Structure and Algorithms", newCode: "CSE-2623", newName: "Algorithms and Data Structures", prereq: "CIS 1613 & CIS 2023", comment: "WF required for older catalog", isExtended: false },
+      { cat: "Common Courses", oldCode: "CIS-3003", oldName: "Human Computer Interaction", newCode: "CIS-2033", newName: "User Centered Design", prereq: "N/A", comment: "", isExtended: false },
+      { cat: "Common Courses", oldCode: "CDS-4833", oldName: "IT & Data Strategy and Governance", newCode: "Pending", newName: "Offered 202710 (BADSC)", prereq: "CDS2433 (PRE), CDS4816 (CO)", comment: "Offered starting 202710", isExtended: false },
+      { cat: "Common Courses", oldCode: "CIS-4603", oldName: "Project Management", newCode: "CIS-3603", newName: "Project Management", prereq: "CIS 2303 or CIS 2113", comment: "", isExtended: false },
+      { cat: "Common Courses", oldCode: "CIS-3113", oldName: "Object Oriented Analysis & Design", newCode: "CSE-2123", newName: "Software Architecture and Design", prereq: "(CIS 2113 / 2303) & (CIS 1613 / 2403)", comment: "", isExtended: false },
+      { cat: "Common Courses", oldCode: "CIS-2603", oldName: "Artificial Intelligence Foundations", newCode: "CIS-1813", newName: "AI Fundamentals", prereq: "N/A", comment: "", isExtended: false },
+
+      // Application Development
+      { cat: "Application Development", oldCode: "CIA-2503", oldName: "Web Applications Development", newCode: "CIS 2213", newName: "Full-stack Web App Development", prereq: "CIS 1203 & CIS 1303", comment: "New course", isExtended: false },
+      { cat: "Application Development", oldCode: "CIA-3103", oldName: "Database Design and Admin", newCode: "CIA-3313", newName: "Database Administration", prereq: "CIS 1303", comment: "Equivalency approved", isExtended: false },
+      { cat: "Application Development", oldCode: "CIA-3123", oldName: "Mobile Game Development", newCode: "CIA-4123", newName: "Mobile Game Development", prereq: "CIA 3003 & (CIA 2503 / CIS 2213)", comment: "WF applicable", isExtended: false },
+      { cat: "Application Development", oldCode: "CIA-3133", oldName: "Advanced Applications Development", newCode: "CIA-4133", newName: "Advanced Applications Development", prereq: "CIA 2503 & CIA 3503", comment: "WF applicable", isExtended: false },
+      { cat: "Application Development", oldCode: "CIA-4003", oldName: "Advanced Mobile Applications", newCode: "CIA-3013", newName: "Advanced Mobile Applications", prereq: "CIA 3003", comment: "Restored official mapping", isExtended: false },
+      { cat: "Application Development", oldCode: "CIA-4303", oldName: "System Administration", newCode: "CYB-3613", newName: "Secure Software Architecture & Coding", prereq: "CIS 2103 & CIS 2903", comment: "Follow this mapping", isExtended: false },
+      { cat: "Application Development", oldCode: "CIB-3103", oldName: "Object Oriented Analysis and Design", newCode: "CSE-2123", newName: "Software Architecture and Design", prereq: "(CIS 2113 / 2303) & (CIS 1613 / 2403)", comment: "Mapped to CSE-2123", isExtended: false },
+      { cat: "Application Development", oldCode: "CIA-3503", oldName: "Advanced OOP", newCode: "CSE-2133", newName: "Software Construction", prereq: "(CIS 2113 / 2303) & (CIS 1613 / 2403)", comment: "", isExtended: false },
+      { cat: "Application Development", oldCode: "CIA-4503", oldName: "Advanced OOP (Elective)", newCode: "CSE-2133", newName: "Software Construction", prereq: "Similar to CIA-3503", comment: "Retained addition", isExtended: true },
+
+      // Cybersecurity
+      { cat: "Cybersecurity", oldCode: "CIN-2003", oldName: "Enterprise Network Services", newCode: "CNS-2003", newName: "Enterprise Network Services", prereq: "CIS 1103 or CIS 1313", comment: "", isExtended: false },
+      { cat: "Cybersecurity", oldCode: "CIN-2103 / CNS-2103", oldName: "Networking Fundamentals", newCode: "CYB-2413", newName: "Networking Fundamentals", prereq: "CIS 1103 or CIS 1313", comment: "", isExtended: false },
+      { cat: "Cybersecurity", oldCode: "CIN-3003 / CNS-3003", oldName: "Switching & Routing Essentials", newCode: "CYB-3513", newName: "Switching, Routing & Wireless", prereq: "CIN 2103 / CNS 2103 / CYB 2413", comment: "", isExtended: false },
+      { cat: "Cybersecurity", oldCode: "CIN-3203 / CNS-3203", oldName: "Enterprise Networking, Security", newCode: "CYB-3623", newName: "Enterprise Networking, Security", prereq: "CYB 3513", comment: "", isExtended: false },
+      { cat: "Cybersecurity", oldCode: "CNS-3023 / CSF-3603", oldName: "Network Security & Cryptography", newCode: "CYB-2423", newName: "Cryptography & Data Protection", prereq: "CIS 2103 or CIS 1213", comment: "", isExtended: false },
+      { cat: "Cybersecurity", oldCode: "CSF-3003", oldName: "Cyber Law and Ethics", newCode: "CNS-3113", newName: "Cyber Law and Ethics", prereq: "CIS 2103 or CIS 1213", comment: "", isExtended: false },
+      { cat: "Cybersecurity", oldCode: "CSF-3103 / CSF-4213", oldName: "Incident Response & Disaster Rec.", newCode: "CYB-3633", newName: "Security Operation & Threat Intel", prereq: "CIN 2103 / CNS 2103 / CYB 2413", comment: "", isExtended: false },
+      { cat: "Cybersecurity", oldCode: "CSF-3203 / CNS-3123", oldName: "Intrusion Detection & Ethical Hack.", newCode: "CYB-3533", newName: "Penetration Testing & Ethical Hack.", prereq: "CIS 2903", comment: "", isExtended: false },
+      { cat: "Cybersecurity", oldCode: "CSF-3403 / CSF-4403", oldName: "Computer Forensics & Investigation", newCode: "CYB-3543", newName: "Digital Forensics & Investigation", prereq: "CIS 2903", comment: "", isExtended: false },
+      { cat: "Cybersecurity", oldCode: "CSF-4103 / CSF-4113", oldName: "Web Application Security", newCode: "CYB-3613", newName: "Secure Software Architecture & Coding", prereq: "CSF 3203 or CYB 3533", comment: "", isExtended: false },
+      { cat: "Cybersecurity", oldCode: "CSF-2113", oldName: "Programming for Info Security", newCode: "N/A", newName: "N/A", prereq: "N/A", comment: "No replacement", isExtended: false },
+      { cat: "Cybersecurity", oldCode: "CSF-4003", oldName: "Security and Risk Management", newCode: "CYB-4823", newName: "Cybersecurity Gov, Risk & Compliance", prereq: "Dept Approval", comment: "Retained addition", isExtended: true },
+
+      // Data Science
+      { cat: "Data Science", oldCode: "CIS-2313", oldName: "Database Development", newCode: "CDS-2443", newName: "Advanced Database Systems", prereq: "CIS 1303", comment: "", isExtended: false },
+      { cat: "Data Science", oldCode: "CIS-2423", oldName: "Programming for Data Analytics", newCode: "CDS-2413", newName: "Programming for Data Science", prereq: "(ICT 2013 / CIS 1603) & (CIS 2003 / 1703)", comment: "", isExtended: false },
+      { cat: "Data Science", oldCode: "CIS-3023", oldName: "Inferential Statistics", newCode: "CDS-3523", newName: "Statistical Inference", prereq: "(CIS 2003 / 1703) & (CIS 1603 / ICT 2013)", comment: "", isExtended: false },
+      { cat: "Data Science", oldCode: "CIS-3123", oldName: "Big Data Technologies", newCode: "CDS-3533", newName: "Big Data Analytics", prereq: "CDS 2443 / CIS 2313 / CIS 1303", comment: "CIS1303 for older cat.", isExtended: false },
+      { cat: "Data Science", oldCode: "CIS-3213", oldName: "Business Process Management", newCode: "CDS-2433", newName: "Business Process Modeling & Opt.", prereq: "CIS 2303 or CIS 2113", comment: "", isExtended: false },
+      { cat: "Data Science", oldCode: "CIS-3403", oldName: "Artificial Intelligence", newCode: "CIS-1813", newName: "AI Fundamentals", prereq: "N/A", comment: "", isExtended: false },
+      { cat: "Data Science", oldCode: "CIS-3413", oldName: "Data Mining for Business", newCode: "CDS-3513", newName: "Data Mining Techniques", prereq: "(CDS 2443 / CIS 2313) & (CDS 2413 / CIS 2423)", comment: "", isExtended: false },
+      { cat: "Data Science", oldCode: "CIS-3613", oldName: "Enterprise Resource Planning", newCode: "CDS-3613", newName: "Enterprise Solution Management", prereq: "CIS 3213 or CDS 2433", comment: "", isExtended: false },
+      { cat: "Data Science", oldCode: "CDS 4103", oldName: "Data Visualization", newCode: "CDS-3543", newName: "Data Visualization for Decision Making", prereq: "(CIS 1703 / 2003) & (CIS 1603 / 1403)", comment: "Corrected code", isExtended: false },
+      { cat: "Data Science", oldCode: "CDS 4303", oldName: "Machine Learning for Data Science", newCode: "CDS-3633", newName: "Machine Learning for Business", prereq: "CIB 3403 / CIS 3413 / CDS 3513", comment: "", isExtended: false },
+      { cat: "Data Science", oldCode: "CDS 4403", oldName: "Time Series Forecasting", newCode: "CDS-3643", newName: "Time Series Analysis & Forecasting", prereq: "CIS 3023 or CDS 3523", comment: "", isExtended: false },
+
+      // Retained Sheet Additions
+      { cat: "Extended Listing", oldCode: "CIB-3013", oldName: "Data Analytics", newCode: "CIS-4013", newName: "Data Analytics for IT Professionals", prereq: "CIS 1703 or equivalent", comment: "Retained addition", isExtended: true },
+      { cat: "Extended Listing", oldCode: "CIB-3123", oldName: "Big Data Technology", newCode: "CDS-3533", newName: "Big Data Technologies", prereq: "Dept Approval", comment: "Eq. with CIS-3123", isExtended: true },
+      { cat: "Extended Listing", oldCode: "CIB-3403", oldName: "Advanced Database Technologies", newCode: "CIS-3413", newName: "Data Mining for Business", prereq: "CIS 1303", comment: "Retained addition", isExtended: true },
+      { cat: "Extended Listing", oldCode: "CIB-4213", oldName: "IT Strategy and Governance", newCode: "CIS-4203", newName: "IT & Data Strategy and Governance", prereq: "Senior Standing", comment: "Retained addition", isExtended: true },
+      { cat: "Extended Listing", oldCode: "CIB-4603", oldName: "Enterprise Resource Planning", newCode: "CDS-3613", newName: "Enterprise Solution Management", prereq: "CIS 3213 or CDS 2433", comment: "Retained addition", isExtended: true },
+      { cat: "Extended Listing", oldCode: "CIS-4933", oldName: "Capstone Project I", newCode: "CIS-4913", newName: "Capstone Project I", prereq: "Senior Standing", comment: "Project sequence", isExtended: true },
+      { cat: "Extended Listing", oldCode: "CIS-4943", oldName: "Capstone Project II", newCode: "CIS-4923", newName: "Capstone Project II", prereq: "CIS-4913 (or CIS-4933)", comment: "Project sequence", isExtended: true }
+    ];
+
+    // Populate dropdown
+    const dropdown = document.getElementById("courseDropdown");
+    courses.forEach((c, idx) => {
+      const opt = document.createElement("option");
+      opt.value = idx;
+      opt.textContent = `${c.oldCode} — ${c.oldName} [${c.cat}]`;
+      dropdown.appendChild(opt);
+    });
+
+    // Autocomplete
+    const searchBox = document.getElementById("searchBox");
+    const autoList = document.getElementById("autoList");
+
+    searchBox.addEventListener("input", function() {
+      const q = this.value.trim().toLowerCase();
+      autoList.innerHTML = "";
+      if (!q) { autoList.style.display = "none"; return; }
+
+      const matches = courses.map((c, idx) => ({ ...c, idx })).filter(c => 
+        c.oldCode.toLowerCase().includes(q) || 
+        c.oldName.toLowerCase().includes(q) || 
+        c.newCode.toLowerCase().includes(q)
+      );
+
+      if (matches.length === 0) { autoList.style.display = "none"; return; }
+
+      matches.slice(0, 6).forEach(m => {
+        const item = document.createElement("div");
+        item.className = "auto-item";
+        item.innerHTML = `
+          <div><strong style="color: #002D72; font-size: 15px;">${m.oldCode}</strong> <span style="color: #1e293b; font-weight: 700; margin-left: 8px;">${m.oldName}</span></div>
+          <span class="mono" style="color: #047857; font-weight: 800; font-size: 12px; background: #ecfdf5; border: 1px solid #a7f3d0; padding: 3px 8px; border-radius: 6px;">➔ ${m.newCode}</span>
+        `;
+        item.addEventListener("click", () => {
+          showCourse(m.idx);
+          searchBox.value = `${m.oldCode} - ${m.oldName}`;
+          autoList.style.display = "none";
+        });
+        autoList.appendChild(item);
+      });
+      autoList.style.display = "block";
+    });
+
+    dropdown.addEventListener("change", function() {
+      if (this.value !== "") {
+        showCourse(parseInt(this.value));
+        searchBox.value = "";
+      } else {
+        document.getElementById("emptyPrompt").style.display = "block";
+        document.getElementById("activeData").style.display = "none";
+      }
+    });
+
+    function showCourse(idx) {
+      const c = courses[idx];
+      document.getElementById("emptyPrompt").style.display = "none";
+      document.getElementById("activeData").style.display = "block";
+
+      document.getElementById("resOldCode").textContent = c.oldCode;
+      document.getElementById("resOldName").textContent = c.oldName;
+      document.getElementById("resNewCode").textContent = c.newCode;
+      document.getElementById("resNewName").textContent = c.newName;
+      document.getElementById("resPrereq").textContent = c.prereq || "None listed";
+      document.getElementById("resCat").textContent = `Discipline: ${c.cat}`;
+
+      const noteBox = document.getElementById("noteBox");
+      if (c.comment) {
+        noteBox.style.display = "block";
+        document.getElementById("resNote").textContent = c.comment;
+      } else {
+        noteBox.style.display = "none";
+      }
+
+      const badge = document.getElementById("resBadge");
+      if (c.isExtended) {
+        badge.className = "pill pill-ext";
+        badge.textContent = "Verified Sheet Addition";
+      } else {
+        badge.className = "pill pill-std";
+        badge.textContent = "Approved Official Catalog";
+      }
+
+      dropdown.value = idx;
+    }
+
+    function copyCode() {
+      const code = document.getElementById("resNewCode").textContent;
+      navigator.clipboard.writeText(code);
+      const txt = document.getElementById("copyTxt");
+      txt.textContent = "Copied!";
+      setTimeout(() => txt.textContent = "Copy Code", 1600);
+    }
+
+    // Render Table
+    function renderTable() {
+      const filter = document.getElementById("catFilter").value;
+      const tbody = document.getElementById("tableBody");
+      tbody.innerHTML = "";
+
+      const filtered = courses.filter(c => filter === "ALL" || c.cat === filter);
+
+      filtered.forEach(c => {
+        const tr = document.createElement("tr");
+        if (c.isExtended) tr.className = "row-highlight";
+
+        tr.innerHTML = `
+          <td>
+            <span class="${c.isExtended ? 'pill pill-ext' : 'pill pill-std'}">${c.cat}</span>
+          </td>
+          <td>
+            <div class="mono" style="font-weight: 800; color: #be123c; font-size: 15px;">${c.oldCode}</div>
+            <div style="font-weight: 700; color: #1e293b; margin-top: 3px;">${c.oldName}</div>
+          </td>
+          <td>
+            <div class="mono" style="font-weight: 800; color: #047857; font-size: 15px;">${c.newCode}</div>
+            <div style="font-weight: 700; color: #0f172a; margin-top: 3px;">${c.newName}</div>
+          </td>
+          <td>
+            <div class="mono" style="font-weight: 800; color: #0f172a;">${c.prereq}</div>
+          </td>
+          <td>
+            <div style="color: ${c.isExtended ? '#6b21a8' : '#78350f'}; font-weight: 800;">
+              ${c.comment || (c.isExtended ? 'Sheet Addition' : '—')}
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Export CSV
+    function exportCSV() {
+      const headers = ["Category", "Phased-Out Code", "Phased-Out Name", "Replacement Code", "Replacement Name", "Pre-requisites", "Comments", "Status"];
+      const rows = courses.map(c => [
+        `"${c.cat}"`, `"${c.oldCode}"`, `"${c.oldName}"`, `"${c.newCode}"`, `"${c.newName}"`,
+        `"${c.prereq.replace(/"/g, '""')}"`, `"${(c.comment || '').replace(/"/g, '""')}"`,
+        `"${c.isExtended ? 'Sheet Addition' : 'Official Catalog'}"`
+      ]);
+
+      const csv = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+      const link = document.createElement("a");
+      link.setAttribute("href", encodeURI(csv));
+      link.setAttribute("download", "HCT_Course_Equivalencies_ADB.csv");
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    renderTable();
+  </script>
+</body>
+</html>
